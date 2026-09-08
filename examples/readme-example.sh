@@ -31,10 +31,10 @@
 # @see validate()
 # @see [shdoc](https://github.com/reconquest/shdoc).
 say-hello() {
-    if [[ ! "$1" ]]; then
-        echo "Oups !" >&2
-        return 1;
-    fi
+  if [[ ! $1 ]]; then
+    echo "Oups !" >&2
+    return 1
+  fi
 
-    echo "Hello $1"
+  echo "Hello $1"
 }

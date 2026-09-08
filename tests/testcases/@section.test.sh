@@ -1,4 +1,3 @@
-
 tests:put input <<EOF
 # @name Project Name
 # @brief Brief

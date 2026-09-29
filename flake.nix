@@ -26,13 +26,14 @@
       utils,
       conformist,
       ...
-    }@inputs:
+    }:
     let
       # eng-versioning(7): version.env at repo root is the single source of
       # truth. The match captures everything after SHDOC_VERSION= up to the
-      # line break; the `export` prefix is tolerated.
+      # line break (excluding a trailing \r, in case the file ever picks up
+      # CRLF endings); the `export` prefix is tolerated.
       shdocVersion = builtins.head (
-        builtins.match ".*SHDOC_VERSION=([^\n]+).*" (builtins.readFile ./version.env)
+        builtins.match ".*SHDOC_VERSION=([^\r\n]+).*" (builtins.readFile ./version.env)
       );
     in
     utils.lib.eachDefaultSystem (

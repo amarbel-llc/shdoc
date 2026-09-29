@@ -73,6 +73,11 @@ test-shdoc:
     for dep in tests.sh opts.bash types.bash test-runner.bash coproc.bash; do
       dir="vendor/github.com/reconquest/$dep"
       if [ ! -e "$dir/$dep" ]; then
+        # Clear out any partial clone left by an interrupted prior run —
+        # `git clone` refuses a non-empty destination, so without this an
+        # incomplete $dir (present but missing $dep) would hard-fail every
+        # retry instead of self-healing.
+        rm -rf "$dir"
         git clone --quiet "https://github.com/reconquest/$dep" "$dir"
       fi
     done

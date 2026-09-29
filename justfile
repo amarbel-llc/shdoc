@@ -21,12 +21,11 @@ lint-fmt:
 
 # Impure eng checks (git remotes, sweatfile, agents-md) against the working
 # tree. The binary comes from `.#conformist`, NOT from PATH: eng's
-# home-profile wrapper (conformistCwd) also installs a `conformist`, and it
-# gates on a checked-in conformist.toml/.conformist.toml/treelint.toml at the
-# git root, exiting 2 before it ever reads --config-file. No eng repo carries
-# one — the config is Nix-generated (.#conformist-impure-config) — so whenever
-# the profile bin wins the PATH race (any run outside the devShell) a bare
-# `conformist` fails this lane. `nix run` makes it PATH-order independent.
+# home-profile wrapper (conformistCwd) also installs a `conformist`, and an
+# explicit --config-file (passed below) already makes it bypass its own
+# checked-in-config discovery entirely — but `nix run` keeps this recipe
+# PATH-order independent regardless of how that wrapper's fallback behavior
+# evolves, matching the fleet convention (doppelgang, hyphence, tacky).
 #
 # run the impure eng checks against the working tree
 [group('lint')]

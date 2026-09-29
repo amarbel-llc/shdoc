@@ -52,17 +52,21 @@ build-nix:
 test: test-shdoc
 
 # Runs the vendored bash test suite (tests/run_tests, from upstream
-# reconquest/shdoc). Pre-seeds test-runner.bash + its transitive deps
-# (opts.bash, types.bash, tests.sh, coproc.bash) into vendor/github.com/reconquest/
-# — the exact set vendor/.gitignore already expects, since they're normally
-# fetched on demand by the vendored import.bash's import:use — before
-# delegating. Pre-seeding is deliberate, not cosmetic: import:use resolves its
-# clone destination by walking UP through parent git repositories, and when
-# this checkout is nested under a larger monorepo (e.g. eng's repos/ tree) that
-# walk escapes this repo and clones into the enclosing repo's root instead.
-# Once each dep already exists at its expected vendor path, import:use's local
-# fast-path is used and that walk never runs. Only fetches what's missing —
-# a repeat run in the same checkout is fully offline.
+# reconquest/shdoc). test-runner.bash's transitive deps (opts.bash,
+# types.bash, tests.sh, coproc.bash) are committed directly under
+# vendor/github.com/reconquest/<dep>/<dep> — plain files, not submodules,
+# each just the one library file those repos export, with each dep's own
+# dev-only tests/docs/nested-vendor cruft stripped out. This is deliberate,
+# not incidental: those deps are normally fetched on demand over the network
+# by the vendored import.bash's import:use, which resolves its clone
+# destination by walking UP through parent git repositories — and when this
+# checkout is nested under a larger monorepo (e.g. eng's repos/ tree) that
+# walk escapes this repo and clones into the enclosing repo's root instead of
+# here. Vendoring them for real sidesteps that bug entirely (import:use's
+# local fast-path always finds them already present) and makes this recipe —
+# which is also the sweatfile's pre-merge gate (`pre-merge = "just"`) —
+# fully offline. Only import.bash itself remains a real git submodule
+# (it's the bootstrapping piece import:use itself lives in).
 #
 # run the vendored bash test suite
 [group('test')]
@@ -70,17 +74,6 @@ test-shdoc:
     #!/usr/bin/env bash
     set -euo pipefail
     git submodule update --init --recursive
-    for dep in tests.sh opts.bash types.bash test-runner.bash coproc.bash; do
-      dir="vendor/github.com/reconquest/$dep"
-      if [ ! -e "$dir/$dep" ]; then
-        # Clear out any partial clone left by an interrupted prior run —
-        # `git clone` refuses a non-empty destination, so without this an
-        # incomplete $dir (present but missing $dep) would hard-fail every
-        # retry instead of self-healing.
-        rm -rf "$dir"
-        git clone --quiet "https://github.com/reconquest/$dep" "$dir"
-      fi
-    done
     bash tests/run_tests
 
 # --- codemod ---
